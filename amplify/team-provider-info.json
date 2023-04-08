@@ -10,6 +10,17 @@
       "StackName": "amplify-comp3516-dev-122536",
       "StackId": "arn:aws:cloudformation:ap-southeast-1:748329367518:stack/amplify-comp3516-dev-122536/6a7e0230-d5c5-11ed-910f-0ac258dcffa6",
       "AmplifyAppId": "d3bwddtm7jshe3"
+    },
+    "categories": {
+      "function": {
+        "comp3516549b7262": {
+          "deploymentBucketName": "amplify-comp3516-dev-122536-deployment",
+          "s3Key": "amplify-builds/comp3516549b7262-3277684748646475724a-build.zip"
+        }
+      },
+      "api": {
+        "comp3516api": {}
+      }
     }
   }
 }

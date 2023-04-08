@@ -4,6 +4,7 @@ import { StyleSheet, View, ImageBackground } from 'react-native';
 import { BottomNavigation, Text, IconButton, MD3Colors } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Audio } from 'expo-av';
+import { API } from 'aws-amplify';
 
 const RecordRoute = () => {
     const [recording, setRecording] = React.useState();
@@ -57,6 +58,8 @@ const RecordRoute = () => {
         });
         const uri = recording.getURI();
         console.log('Recording stopped and stored at', uri);
+        const response = await API.get('comp3516api', '/');
+        console.log(response)
     }
 
     return(
@@ -102,11 +105,12 @@ export default function App() {
 
     return (
         <SafeAreaProvider>
-            <BottomNavigation
+            <RecordRoute/>
+            {/*<BottomNavigation
                 navigationState={{ index, routes }}
                 onIndexChange={setIndex}
                 renderScene={renderScene}
-            />
+            />*/}
         </SafeAreaProvider>
     );
 }

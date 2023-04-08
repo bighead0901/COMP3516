@@ -1,1 +1,43 @@
-{}
+{
+  "api": {
+    "comp3516api": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "comp3516549b7262"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "API Gateway"
+    }
+  },
+  "function": {
+    "comp3516549b7262": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_function_comp3516549b7262_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "comp3516549b7262"
+        }
+      ]
+    },
+    "AMPLIFY_function_comp3516549b7262_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "comp3516549b7262"
+        }
+      ]
+    }
+  }
+}
