@@ -3,7 +3,6 @@ import * as React from 'react';
 import { StyleSheet, View, ImageBackground } from 'react-native';
 import { BottomNavigation, Text, IconButton, MD3Colors } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 
 const RecordRoute = () => {
