@@ -15,7 +15,7 @@
       "function": {
         "comp3516549b7262": {
           "deploymentBucketName": "amplify-comp3516-dev-122536-deployment",
-          "s3Key": "amplify-builds/comp3516549b7262-3277684748646475724a-build.zip"
+          "s3Key": "amplify-builds/comp3516549b7262-4334685a356571476e4e-build.zip"
         }
       },
       "api": {
