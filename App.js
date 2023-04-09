@@ -6,7 +6,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Audio } from 'expo-av';
 import { API } from 'aws-amplify';
 import axios from 'axios';
-import base64 from 'react-native-base64';
+import * as FileSystem from "expo-file-system";
+
 
 const apiURL = "http://10.0.2.2:5000/api/audio"
 
@@ -41,8 +42,31 @@ const RecordRoute = () => {
             });
 
             console.log('Starting recording..');
+            const options = {
+              isMeteringEnabled: true,
+              android: {
+                extension: '.m4a',
+                sampleRate: 44100,
+                numberOfChannels: 2,
+                bitRate: 128000,
+              },
+              ios: {
+                extension: '.m4a',
+                sampleRate: 44100,
+                numberOfChannels: 2,
+                bitRate: 128000,
+                linearPCMBitDepth: 16,
+                linearPCMIsBigEndian: false,
+                linearPCMIsFloat: false,
+              },
+              web: {
+                mimeType: 'audio/webm',
+                bitsPerSecond: 128000,
+              },
+            };
+
             const { recording } = await Audio.Recording.createAsync(
-                Audio.RecordingOptionsPresets.HIGH_QUALITY,
+                options,
                 (status) => setTime(status),
                 20
             );
@@ -64,37 +88,15 @@ const RecordRoute = () => {
             const uri = recording.getURI();
             console.log('Recording stopped and stored at', uri, recording);
             //const response = await API.get('comp3516api', '/');
+            try {
+                const response = await FileSystem.uploadAsync(apiURL,uri);
+                //const body = JSON.parse(response.body);
+                console.log(response)
+            setText(body.text);
+            } catch (err) {
+                console.error(err);
+            }
 
-            // utitlity function to convert BLOB to BASE64
-            const blobToBase64 = (blob) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                return new Promise((resolve) => {
-                    reader.onloadend = () => {
-                        resolve(reader.result);
-                    };
-                });
-            };
-            // Fetch audio binary blob data
-            const audioURI = recording.getURI();
-            const blob = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.onload = function () {
-                resolve(xhr.response);
-            };
-            xhr.onerror = function (e) {
-                reject(new TypeError("Network request failed"));
-            };
-            xhr.responseType = "blob";
-            xhr.open("GET", audioURI, true);
-            xhr.send(null);
-            });
-
-            const audioBase64 = await blobToBase64(blob);
-            const response = await axios.post(apiURL,base64.encode(audioBase64)
-            );
-            console.log(response)
-            blob.close()
         }catch (e){
             console.error(e)
         }
