@@ -7,3 +7,5 @@ scipy
 keras
 tensorflow
 matplotlib
+pyAudioAnalysis
+noisereduce

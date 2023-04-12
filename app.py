@@ -8,6 +8,10 @@ from scipy.signal import butter, lfilter, correlate
 import os
 import base64
 from pydub import AudioSegment
+from pyAudioAnalysis import audioBasicIO
+from pyAudioAnalysis import audioSegmentation as aS
+import noisereduce as nr
+import tempfile
 
 app = Flask(__name__)
 
@@ -36,7 +40,7 @@ def extract_new_features(audio_samples, sample_rate):
     # Extract features as in process_file
     pitch = librosa.piptrack(y=audio_samples, sr=sample_rate, fmin=80, fmax=400)
     spectral_centroid = librosa.feature.spectral_centroid(y=audio_samples, sr=sample_rate)
-    spectral_contrast = librosa.feature.spectral_contrast(y=audio_samples, sr=sample_rate)
+    spectral_contrast = librosa.feature.spectral_contrast(y=audio_samples, sr=sample_rate, fmin=100)    
     spectral_rolloff = librosa.feature.spectral_rolloff(y=audio_samples, sr=sample_rate)
     mfcc = librosa.feature.mfcc(y=audio_samples, sr=sample_rate)
     zero_crossing_rate = librosa.feature.zero_crossing_rate(y=audio_samples)
@@ -55,6 +59,24 @@ def extract_new_features(audio_samples, sample_rate):
         'rms': np.mean(rms)
     }
 
+def detect_multiple_speakers(audio_samples, sample_rate, threshold=2):
+    # Save the audio samples to a temporary file
+    temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+    audioBasicIO.write_audio_file(temp_file.name, audio_samples, sample_rate, 16)
+
+    # Perform speaker diarization with LIUM
+    segments, speaker_indices, spk_info = aS.speaker_diarization(temp_file.name, n_speakers=-1)
+
+    # Remove the temporary file
+    temp_file.close()
+    os.unlink(temp_file.name)
+
+    # Count unique speaker indices
+    unique_speaker_count = len(np.unique(speaker_indices))
+
+    # Return True if more than one speaker found, False otherwise
+    return unique_speaker_count >= threshold
+
 def process_audio(audio_samples, sample_rate):
     # Clear background noise, music, or other weird sound
     # (IMPLEMENTATION OF NOISE REDUCTION AS NEEDED)
@@ -65,6 +87,17 @@ def process_audio(audio_samples, sample_rate):
         print('Multiple Speaking Voices in the Background')
         return None
     '''
+
+    # Denoise audio using the noisereduce library
+    denoised_audio = nr.reduce_noise(audio_clip=audio_samples, noise_clip=audio_samples, verbose=False)
+
+    # Convert denoised audio back to int16
+    denoised_audio = denoised_audio.astype(np.int16)
+
+    # Check if there are multiple speakers
+    if detect_multiple_speakers(denoised_audio, sample_rate):
+        print('Multiple Speaking Voices in the Background')
+        return None
 
     # Apply a bandpass filter
     lowcut = 300
