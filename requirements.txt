@@ -9,3 +9,7 @@ tensorflow
 matplotlib
 pyAudioAnalysis
 noisereduce
+eyed3
+hmmlearn
+imblearn
+plotly
