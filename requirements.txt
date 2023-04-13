@@ -13,3 +13,5 @@ eyed3
 hmmlearn
 imblearn
 plotly
+pandas
+pyaudio
