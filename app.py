@@ -105,6 +105,32 @@ def predict(file_list=None, model_path=None, audio_data=None):
 
     return np.argmax(result, axis=1)
 
+
+def predict2(model_path, audio_data):
+    # Load the pre-trained model
+    model = load_model(model_path)
+
+    # Process the audio data
+    features = process_audio(*audio_data)
+    if features is None:
+        print("Empty processed audio or multiple speakers detected. Skipping prediction.")
+        return None
+
+    # Store the extracted features in a DataFrame
+    features_df = pd.DataFrame([features])
+
+    # Encode the categorical variables
+    features_df = encode_categorical_variables(features_df)
+
+    # Print the columns of the features_df DataFrame
+    print("Columns of the features_df DataFrame:")
+    print(features_df.columns)
+
+    # Make the prediction using the model
+    predictions = model.predict(features_df)
+
+    return np.argmax(predictions, axis=1)
+
 def normalize_features(features_df):
     features_to_scale = ['pitch', 'spectral_centroid', 'spectral_contrast', 'spectral_rolloff', 'zero_crossing_rate', 'rms']
     scaler = StandardScaler()
@@ -139,7 +165,7 @@ def extract_new_features(audio_samples, sample_rate):
     # Extract features as in process_file
     pitch = librosa.piptrack(y=audio_samples, sr=sample_rate, fmin=80, fmax=400)
     spectral_centroid = librosa.feature.spectral_centroid(y=audio_samples, sr=sample_rate)
-    spectral_contrast = librosa.feature.spectral_contrast(y=audio_samples, sr=sample_rate, fmin=100)    
+    spectral_contrast = librosa.feature.spectral_contrast(y=audio_samples, sr=sample_rate, fmin=100)
     spectral_rolloff = librosa.feature.spectral_rolloff(y=audio_samples, sr=sample_rate)
     mfcc = librosa.feature.mfcc(y=audio_samples, sr=sample_rate)
     zero_crossing_rate = librosa.feature.zero_crossing_rate(y=audio_samples)
@@ -173,15 +199,20 @@ def detect_multiple_speakers(audio, threshold=2):
     # Return True if more than one speaker found, False otherwise
     return unique_speaker_count >= threshold
 
-def process_audio(audio_samples, sample_rate):
+def process_audio(audio_data, sample_rate):
     # Denoise audio using the noisereduce library
-    denoised_audio = nr.reduce_noise(y=audio_samples, sr=sample_rate).astype(np.int16)
+    denoised_audio = nr.reduce_noise(y=audio_data, sr=sample_rate).astype(np.int16)
 
-    # Check if there are multiple speakers
-    if detect_multiple_speakers(denoised_audio, sample_rate):
-        print('Multiple Speaking Voices in the Background')
+    if denoised_audio.size == 0:
+        print("Warning: Empty denoised signal. Skipping speaker diarization.")
         return None
-
+    
+    '''
+    if detect_multiple_speakers(denoised_audio, sample_rate):
+        print("Multiple speakers detected. Skipping further processing.")
+        return None
+    '''
+    
     lowcut = 300
     highcut = 3400
     filtered_audio = butter_bandpass_filter(denoised_audio, lowcut, highcut, sample_rate)
@@ -215,9 +246,11 @@ def predict_gender_and_robotic(model_file):
     p.terminate()
 
     audio_data = np.frombuffer(b''.join(data), dtype=np.int16)
+    print(audio.sample_width, audio.channels, audio.frame_rate)
     #print(audio_samples == audio_data)
 
-    predictions = predict(model_path=model_file, audio_data=(audio_data, audio.frame_rate))  
+    predictions = predict2(model_path=model_file, audio_data=(audio_data, audio.frame_rate))
+    #predictions = predict(model_path=model_file, audio_data=(audio_data, audio.frame_rate))  
     return predictions
 
     """
@@ -261,6 +294,6 @@ def get_score():
 
         #print(data)
         result = predict_gender_and_robotic(model_file)
-        return f"""Content Type is  {content_type} and data is {data} \n length is {length}\n result is {result}"""
+        return result
     elif request.method == 'GET':
-        return 'get method received'
+        return 'server running properly'
