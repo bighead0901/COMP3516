@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, json
 import keras
 from keras.models import load_model
 import numpy as np
@@ -291,7 +291,7 @@ def get_score():
 
         #print(data)
         result = predict_gender_and_robotic(model_file)
-        print(result)
-        return result
+        print(result.tolist())
+        return result.tolist(), 200
     elif request.method == 'GET':
         return 'server running properly'
