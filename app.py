@@ -14,6 +14,7 @@ import noisereduce as nr
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 import pandas as pd
 import pyaudio
+from io import BytesIO
 
 app = Flask(__name__)
 directory = os.path.abspath(os.curdir)
@@ -23,7 +24,7 @@ def process_file(filename):
     if ' ' in filename:
         print(f"Skipping file {filename} due to spaces in filename")
         return None
-    elif filename.endswith('.wav') or filename.endswith('.mp3'):
+    elif filename.endswith('.wav') or filename.endswith('.mp3') or filename.endswith('.m4a'):
         try:
             # Load the audio file and convert it to a numpy array
             file_path = os.path.join(directory, filename)
@@ -73,6 +74,7 @@ def process_file(filename):
         print(f"Skipping file {filename} due to unsupported format")
         return None
 
+
 def predict(file_list=None, model_path=None, audio_data=None):
     # Load the pre-trained model
     model = load_model(model_path)
@@ -92,7 +94,7 @@ def predict(file_list=None, model_path=None, audio_data=None):
     features_df = pd.DataFrame(features_list)
 
     # Normalize and encode the features
-    features_df = normalize_features(features_df)
+    # features_df = normalize_features(features_df) [ No need normalise for prediction ]
     features_df = encode_categorical_variables(features_df)
 
     # Get the input features for the model
@@ -199,20 +201,15 @@ def detect_multiple_speakers(audio, threshold=2):
     # Return True if more than one speaker found, False otherwise
     return unique_speaker_count >= threshold
 
-def process_audio(audio_data, sample_rate):
+def process_audio(audio_samples, sample_rate):
     # Denoise audio using the noisereduce library
-    denoised_audio = nr.reduce_noise(y=audio_data, sr=sample_rate).astype(np.int16)
+    denoised_audio = nr.reduce_noise(y=audio_samples, sr=sample_rate).astype(np.int16)
 
-    if denoised_audio.size == 0:
-        print("Warning: Empty denoised signal. Skipping speaker diarization.")
-        return None
-    
-    '''
+    # Check if there are multiple speakers
     if detect_multiple_speakers(denoised_audio, sample_rate):
-        print("Multiple speakers detected. Skipping further processing.")
+        print('Multiple Speaking Voices in the Background')
         return None
-    '''
-    
+
     lowcut = 300
     highcut = 3400
     filtered_audio = butter_bandpass_filter(denoised_audio, lowcut, highcut, sample_rate)
@@ -226,34 +223,34 @@ def process_audio(audio_data, sample_rate):
 def predict_gender_and_robotic(model_file):
     #path = os.path.join(os.path.abspath(os.curdir), "recording-01c4e23d-af8b-4586-a154-a2a2420d90c6.wav") 
     path = os.path.join(os.path.abspath(os.curdir), "file.m4a")
-    print(path)
     audio = AudioSegment.from_file(path)
-    
+    print(path, audio.sample_width, audio.channels, audio.frame_rate)
+
+    #predictions = predict2(model_path=model_file, audio_data=(audio_data, audio.frame_rate))
+    #predictions = predict(model_path=model_file, audio_data=(np.array(audio.get_array_of_samples(), dtype=np.int16), audio.frame_rate))  
+    predictions = predict(file_list=[path],model_path=model_file)  
+    return predictions
+
+    """
     p = pyaudio.PyAudio()
-    stream = p.open(format =
-                p.get_format_from_width(audio.sample_width),
+    print(path, "format:", p.get_format_from_width(audio.sample_width))
+    data = audio[:1024]._data
+    stream = p.open(format = p.get_format_from_width(audio.sample_width),
                 channels = audio.channels,
                 rate = audio.frame_rate,
                 output = True)
     i = 0
-    data = audio[:1024]._data
     while data:
         stream.write(data)
         i += 1024
         data = audio[i:i + 1024]._data
 
-    stream.close()    
+    stream.close()   
     p.terminate()
-
     audio_data = np.frombuffer(b''.join(data), dtype=np.int16)
+    
     print(audio.sample_width, audio.channels, audio.frame_rate)
     #print(audio_samples == audio_data)
-
-    predictions = predict2(model_path=model_file, audio_data=(audio_data, audio.frame_rate))
-    #predictions = predict(model_path=model_file, audio_data=(audio_data, audio.frame_rate))  
-    return predictions
-
-    """
     # Load the model from the specified file path
     model = keras.models.load_model(model_file)
 
@@ -294,6 +291,7 @@ def get_score():
 
         #print(data)
         result = predict_gender_and_robotic(model_file)
+        print(result)
         return result
     elif request.method == 'GET':
         return 'server running properly'
