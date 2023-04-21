@@ -1,20 +1,5 @@
 {
-  "api": {
-    "comp3516api": {
-      "dependsOn": [
-        {
-          "attributes": [
-            "Name",
-            "Arn"
-          ],
-          "category": "function",
-          "resourceName": "comp3516549b7262"
-        }
-      ],
-      "providerPlugin": "awscloudformation",
-      "service": "API Gateway"
-    }
-  },
+  "api": {},
   "function": {
     "comp3516549b7262": {
       "build": true,

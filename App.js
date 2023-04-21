@@ -13,6 +13,7 @@ const apiURL = "http://10.0.2.2:5000/api/audio"
 
 const RecordRoute = () => {
     const [recording, setRecording] = React.useState();
+    const [predictionResult, setpredictionResult] = React.useState();
     const [recordingDuration, setRecordingDuration] = React.useState("00:00:00.0");
     function setTime(time) {
         //console.log(time)
@@ -35,6 +36,7 @@ const RecordRoute = () => {
     async function startRecording() {
         try {
             console.log('Requesting permissions..');
+            setpredictionResult();
             await Audio.requestPermissionsAsync();
             await Audio.setAudioModeAsync({
                 allowsRecordingIOS: true,
@@ -79,6 +81,7 @@ const RecordRoute = () => {
 
     async function stopRecording() {
         try{
+            setpredictionResult("Processing...");
             console.log('Stopping recording..' + recordingDuration);
             setRecording(undefined);
             await recording.stopAndUnloadAsync();
@@ -91,8 +94,13 @@ const RecordRoute = () => {
             try {
                 const response = await FileSystem.uploadAsync(apiURL,uri);
                 //const body = JSON.parse(response.body);
-                console.log(response)
-            setText(body.text);
+                let label = "Not recognised... Try again."
+                if (response.body == "0") label = "It's a male human voice!"
+                else if (response.body == "1") label = "It's a male robotic voice!"
+                else if (response.body == "2") label = "It's a female human voice!"
+                else if (response.body == "3") label = "It's a female robotic voice!"
+                else label = "Error in processing.. Try again later."
+                setpredictionResult(label);
             } catch (err) {
                 console.error(err);
             }
@@ -110,6 +118,9 @@ const RecordRoute = () => {
                     {recording ? `Recording... ${recordingDuration}` : 'Press button below to start recording'}
                 </Text>
             </View>
+            {predictionResult ? <Text style={styles.text2}>
+                {predictionResult}
+            </Text>: null}
             <IconButton
                 icon="record"
                 iconColor={recording ? "red" : "grey"}
