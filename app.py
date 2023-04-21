@@ -291,7 +291,7 @@ def get_score():
 
         #print(data)
         result = predict_gender_and_robotic(model_file)
-        print(result.tolist())
-        return result.tolist(), 200
+        print(str(result.tolist()[0]))
+        return str(result.tolist()[0]), 200
     elif request.method == 'GET':
         return 'server running properly'
